@@ -331,6 +331,21 @@
         return parts.join(sep(colors));
     }
 
+    function getDirectChildByItemId(container, itemId) {
+        if (!container || container.destroyed || container.isDestroyed || !container.items) return null;
+
+        var items = Ext.isArray(container.items) ? container.items :
+            (container.items.items && Ext.isArray(container.items.items) ? container.items.items : null);
+
+        if (!items) return null;
+
+        for (var i = 0; i < items.length; i++) {
+            if (items[i] && items[i].itemId === itemId) return items[i];
+        }
+
+        return null;
+    }
+
     // ─── StatusView Override ───────────────────────────────────────
     function applyOverride() {
         if (typeof Ext === 'undefined' || !Ext.ClassManager) {
@@ -389,14 +404,14 @@
                 if (!store) return;
 
                 store.on('load', function (s, records) {
-                    if (!records || !records.length) return;
+                    if (!records || !records.length || me.destroyed || me.isDestroyed || !me.items) return;
 
                     // Update sensor filter from API data
                     var filterRec = s.findRecord('key', 'sensorsFilter');
                     activeSensorFilter = filterRec ? parseSensorFilter(filterRec.get('value')) : null;
 
                     // Hide sensor row entirely when API doesn't include sensorsOutput
-                    var sensorWidget = me.getComponent ? me.getComponent('sensors') : null;
+                    var sensorWidget = getDirectChildByItemId(me, 'sensors');
                     if (sensorWidget) {
                         var sensorsRec = s.findRecord('key', 'sensorsOutput');
                         var hasSensorData = sensorsRec !== null;
@@ -414,7 +429,7 @@
                     var upsData = upsRec ? upsRec.get('value') : null;
 
                     // Only inject UPS item once, and only if there is data
-                    if (upsData && upsData.trim() !== '' && me.getComponent && !me.getComponent('upsStatus')) {
+                    if (upsData && upsData.trim() !== '' && !getDirectChildByItemId(me, 'upsStatus') && me.add) {
                         me.add({
                             xtype: 'pmxInfoWidget',
                             itemId: 'upsStatus',
