@@ -1214,7 +1214,38 @@ install_sensors() {
         return 0
     fi
 
-    read -p "Enable hardware sensor monitoring in the dashboard? [y/N]: " sensor_choice
+    if [[ -f "$SENSORS_CONFIG" ]]; then
+        echo ""
+        print_info "Hardware sensor monitoring is already configured."
+        manage_sensors status
+        echo ""
+        echo "  k) Keep current sensor configuration (default)"
+        echo "  r) Reconfigure sensor selection"
+        echo "  d) Disable sensors"
+        echo ""
+        read -p "Choose sensor action [K/r/d]: " sensor_choice || sensor_choice=""
+
+        case "$sensor_choice" in
+            [Rr])
+                patch_nodes_pm || return 1
+                configure_sensor_filter
+                patch_cluster_sensors
+                print_status "Hardware sensor monitoring updated!"
+                ;;
+            [Dd])
+                remove_sensors
+                print_status "Hardware sensor monitoring disabled"
+                ;;
+            *)
+                patch_nodes_pm || return 1
+                patch_cluster_sensors
+                print_status "Keeping current sensor configuration"
+                ;;
+        esac
+        return 0
+    fi
+
+    read -p "Enable hardware sensor monitoring in the dashboard? [y/N]: " sensor_choice || sensor_choice=""
     case "$sensor_choice" in
         [Yy]|[Yy][Ee][Ss])
             patch_nodes_pm || return 1
@@ -1222,7 +1253,7 @@ install_sensors() {
             echo "enabled" > "$SENSORS_CONFIG"
             print_status "Hardware sensor monitoring enabled!"
             echo ""
-            read -p "Would you like to choose which sensors to display? [y/N]: " filter_choice
+            read -p "Would you like to choose which sensors to display? [y/N]: " filter_choice || filter_choice=""
             case "$filter_choice" in
                 [Yy]|[Yy][Ee][Ss])
                     configure_sensor_filter
