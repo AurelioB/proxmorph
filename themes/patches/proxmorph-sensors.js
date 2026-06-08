@@ -109,12 +109,6 @@
         // our store.on('load') fires after ExtJS already called this renderer)
         try {
             var store = (record && record.store) ? record.store : null;
-            if (!store) {
-                var widget = Ext.ComponentQuery.query('#sensors')[0];
-                if (widget && widget.ownerCt && widget.ownerCt.getStore) {
-                    store = widget.ownerCt.getStore();
-                }
-            }
             if (store) {
                 var filterRec = store.findRecord('key', 'sensorsFilter');
                 activeSensorFilter = filterRec ? parseSensorFilter(filterRec.get('value')) : null;
@@ -402,7 +396,7 @@
                     activeSensorFilter = filterRec ? parseSensorFilter(filterRec.get('value')) : null;
 
                     // Hide sensor row entirely when API doesn't include sensorsOutput
-                    var sensorWidget = me.down('#sensors');
+                    var sensorWidget = me.getComponent ? me.getComponent('sensors') : null;
                     if (sensorWidget) {
                         var sensorsRec = s.findRecord('key', 'sensorsOutput');
                         var hasSensorData = sensorsRec !== null;
@@ -420,7 +414,7 @@
                     var upsData = upsRec ? upsRec.get('value') : null;
 
                     // Only inject UPS item once, and only if there is data
-                    if (upsData && upsData.trim() !== '' && !me.down('#upsStatus')) {
+                    if (upsData && upsData.trim() !== '' && me.getComponent && !me.getComponent('upsStatus')) {
                         me.add({
                             xtype: 'pmxInfoWidget',
                             itemId: 'upsStatus',

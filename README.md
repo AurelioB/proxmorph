@@ -73,13 +73,13 @@ Comparison between default Proxmox Dark theme and UniFi theme:
 ### One-Liner Install
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/IT-BAER/proxmorph/main/install.sh) install
+bash <(curl -fsSL https://raw.githubusercontent.com/AurelioB/proxmorph/main/install.sh) install
 ```
 
 ### Manual Install
 
 ```bash
-git clone https://github.com/IT-BAER/proxmorph.git
+git clone https://github.com/AurelioB/proxmorph.git
 cd proxmorph
 chmod +x install.sh
 ./install.sh install
@@ -97,7 +97,7 @@ chmod +x install.sh
 |---------|-------------|
 | `./install.sh install` | Install themes |
 | `./install.sh uninstall` | Remove themes |
-| `./install.sh update` or `bash <(curl -fsSL https://raw.githubusercontent.com/IT-BAER/proxmorph/main/install.sh) update` | Updates (latest from GitHub) and install the latest themes |
+| `./install.sh update` or `bash <(curl -fsSL https://raw.githubusercontent.com/AurelioB/proxmorph/main/install.sh) update` | Updates (latest from GitHub) and install the latest themes |
 | `./install.sh status` | Show installation status |
 | `./install.sh` | Shows Menu to manage|
 
