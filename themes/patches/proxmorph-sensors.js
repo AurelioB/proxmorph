@@ -33,8 +33,10 @@
     // ─── Sensor Filter (populated from API on store load) ──────────
     // null = no filter (show all), otherwise object with chip:label keys
     var activeSensorFilter = null;
+    var sensorFilterResolved = false;
 
     function isSensorAllowed(chipKey, label) {
+        if (!sensorFilterResolved) return false;
         if (!activeSensorFilter) return true;
         return activeSensorFilter[chipKey + ':' + label] === true;
     }
@@ -112,12 +114,14 @@
             if (store) {
                 var filterRec = store.findRecord('key', 'sensorsFilter');
                 activeSensorFilter = filterRec ? parseSensorFilter(filterRec.get('value')) : null;
+                sensorFilterResolved = !!filterRec || (store.isLoaded && store.isLoaded());
             }
         } catch (e) { /* filter stays as-is */ }
 
         var data = parseSensorsJSON(value);
         var colors = getThemeColors();
         if (!data) return tag('N/A', colors.textDim);
+        if (!sensorFilterResolved) return '';
 
         var sections = [];
 
@@ -409,6 +413,7 @@
                     // Update sensor filter from API data
                     var filterRec = s.findRecord('key', 'sensorsFilter');
                     activeSensorFilter = filterRec ? parseSensorFilter(filterRec.get('value')) : null;
+                    sensorFilterResolved = true;
 
                     // Hide sensor row entirely when API doesn't include sensorsOutput
                     var sensorWidget = getDirectChildByItemId(me, 'sensors');
