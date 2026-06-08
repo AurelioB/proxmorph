@@ -21,6 +21,7 @@ THEMES_DIR="${WIDGET_TOOLKIT_DIR}/themes"
 PROXMOXLIB_JS="${WIDGET_TOOLKIT_DIR}/proxmoxlib.js"
 BACKUP_DIR="/root/.proxmorph-backup"
 GITHUB_REPO="AurelioB/proxmorph"
+GITHUB_BRANCH="main"
 INSTALL_DIR="/opt/proxmorph"
 
 # Sensor support paths
@@ -138,22 +139,38 @@ get_latest_version() {
         grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/'
 }
 
-# Download and extract release from GitHub
+# Download and extract release from GitHub. Forks may not publish releases, so
+# fall back to the configured branch archive when no latest release exists.
 download_release() {
-    local version="${1:-$(get_latest_version)}"
-    
-    if [[ -z "$version" ]]; then
-        print_error "Could not determine latest version"
-        exit 1
+    local version="${1:-}"
+    local download_url=""
+    local source_label=""
+    local strip_components=0
+
+    if [[ -n "$version" ]]; then
+        download_url="https://github.com/${GITHUB_REPO}/releases/download/v${version}/proxmorph-${version}.tar.gz"
+        source_label="v${version}"
+    else
+        version="$(get_latest_version)"
+
+        if [[ -n "$version" ]]; then
+            download_url="https://github.com/${GITHUB_REPO}/releases/download/v${version}/proxmorph-${version}.tar.gz"
+            source_label="v${version}"
+        else
+            version="branch-${GITHUB_BRANCH}"
+            download_url="https://github.com/${GITHUB_REPO}/archive/refs/heads/${GITHUB_BRANCH}.tar.gz"
+            source_label="${GITHUB_BRANCH} branch"
+            strip_components=1
+            print_warning "No GitHub release found for ${GITHUB_REPO}; using ${GITHUB_BRANCH} branch"
+        fi
     fi
     
-    print_info "Downloading ProxMorph v${version}..."
-    
-    local download_url="https://github.com/${GITHUB_REPO}/releases/download/v${version}/proxmorph-${version}.tar.gz"
+    print_info "Downloading ProxMorph ${source_label}..."
+
     local tmp_dir=$(mktemp -d)
     
-    if ! curl -sL "$download_url" -o "${tmp_dir}/proxmorph.tar.gz"; then
-        print_error "Failed to download release v${version}"
+    if ! curl -fsSL "$download_url" -o "${tmp_dir}/proxmorph.tar.gz"; then
+        print_error "Failed to download ProxMorph ${source_label}"
         rm -rf "$tmp_dir"
         exit 1
     fi
@@ -161,13 +178,13 @@ download_release() {
     # Extract to install directory
     mkdir -p "$INSTALL_DIR"
     rm -rf "${INSTALL_DIR:?}"/*
-    tar -xzf "${tmp_dir}/proxmorph.tar.gz" -C "$INSTALL_DIR"
+    tar -xzf "${tmp_dir}/proxmorph.tar.gz" -C "$INSTALL_DIR" --strip-components="$strip_components"
     rm -rf "$tmp_dir"
     
     # Save version info
     echo "$version" > "${INSTALL_DIR}/.version"
     
-    print_status "Downloaded ProxMorph v${version}"
+    print_status "Downloaded ProxMorph ${source_label}"
 }
 
 # Check for updates
